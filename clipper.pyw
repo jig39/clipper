@@ -12,7 +12,7 @@ from pystray import MenuItem,Menu
 
 flg=False
 
-def send_to_clipboard(image: Image.Image):
+def SendToClipboard(image: Image.Image):
     output = BytesIO()
     image.convert('RGB').save(output, 'BMP')
     data = output.getvalue()[14:]
@@ -23,7 +23,7 @@ def send_to_clipboard(image: Image.Image):
     win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
     win32clipboard.CloseClipboard()
 
-def copy_active_window_to_clipboard():
+def CopyActiveWindow():
     active_window = gw.getActiveWindow()
     if active_window is None:
         return
@@ -34,33 +34,33 @@ def copy_active_window_to_clipboard():
     height = bottom - y
 
     screenshot = pyautogui.screenshot(region=(x, y, width, height))
-    send_to_clipboard(screenshot)
+    SendToClipboard(screenshot)
 
-def on_quit(icon, item):
+def QuitApp(icon, item):
     global flg
     flg=True
     icon.stop()
 
-def create_icon():
+def CreateIcon():
     icon_image = Image.open("icon.png")
     menu=Menu(
-        MenuItem('終了',on_quit)
+        MenuItem('終了',QuitApp)
     )
     icon = pystray.Icon("test_icon", icon_image,title='clipper App', menu=menu)
     icon.run()
 
-def start_tray_icon():
-    icon_thread = threading.Thread(target=create_icon)
+def StartTrayIcon():
+    icon_thread = threading.Thread(target=CreateIcon)
     icon_thread.daemon = True
     icon_thread.start()
 
 def main():
     #show icon
-    start_tray_icon()
+    StartTrayIcon()
     
     while not flg:
         if keyboard.is_pressed("End"):
-            copy_active_window_to_clipboard()
+            CopyActiveWindow()
             while keyboard.is_pressed("End"):
                 pass
             
