@@ -10,7 +10,7 @@ from PIL import Image
 import pystray
 from pystray import MenuItem,Menu
 
-flg=False
+flg=False #global
 
 def send_to_clipboard(image: Image.Image):
     output = BytesIO()
