@@ -4,11 +4,13 @@ import win32gui
 import win32clipboard
 import threading
 import keyboard
+import sys
 from io import BytesIO
 from PIL import Image
 import pystray
-from pystray import MenuItem as item
+from pystray import MenuItem,Menu
 
+flg=False
 
 def send_to_clipboard(image: Image.Image):
     output = BytesIO()
@@ -35,11 +37,16 @@ def copy_active_window_to_clipboard():
     send_to_clipboard(screenshot)
 
 def on_quit(icon, item):
+    global flg
+    flg=True
     icon.stop()
 
 def create_icon():
     icon_image = Image.open("icon.png")
-    icon = pystray.Icon("test_icon", icon_image, menu=(item('Quit', on_quit),))
+    menu=Menu(
+        MenuItem('終了',on_quit)
+    )
+    icon = pystray.Icon("test_icon", icon_image,title='clipper App', menu=menu)
     icon.run()
 
 def start_tray_icon():
@@ -51,11 +58,13 @@ def main():
     #show icon
     start_tray_icon()
     
-    while True:
+    while not flg:
         if keyboard.is_pressed("End"):
             copy_active_window_to_clipboard()
             while keyboard.is_pressed("End"):
                 pass
+            
+    sys.exit()
 
 if __name__ == "__main__":
     main()
