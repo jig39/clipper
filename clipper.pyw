@@ -68,5 +68,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-#命名が未だに適当
