@@ -1,5 +1,4 @@
 import pygetwindow as gw
-import pyautogui
 import win32gui
 import win32clipboard
 import threading
@@ -7,10 +6,12 @@ import keyboard
 import sys
 from io import BytesIO
 from PIL import Image
+import mss
 import pystray
-from pystray import MenuItem,Menu
+from pystray import MenuItem, Menu
 
-flg=False #global
+#終了フラグ
+exit_event = threading.Event()
 
 def send_to_clipboard(image: Image.Image):
     output = BytesIO()
@@ -23,6 +24,7 @@ def send_to_clipboard(image: Image.Image):
     win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
     win32clipboard.CloseClipboard()
 
+# アクティブウィンドウのスクショコピー
 def copy_active_window_to_clipboard():
     active_window = gw.getActiveWindow()
     if active_window is None:
@@ -33,20 +35,21 @@ def copy_active_window_to_clipboard():
     width = right - x
     height = bottom - y
 
-    screenshot = pyautogui.screenshot(region=(x, y, width, height))
-    send_to_clipboard(screenshot)
+    with mss.mss() as sct:
+        monitor = {"top": y, "left": x, "width": width, "height": height}
+        sct_img = sct.grab(monitor)
+        img = Image.frombytes("RGB", sct_img.size, sct_img.rgb)
+        send_to_clipboard(img)
 
 def on_quit(icon, item):
-    global flg
-    flg=True
     icon.stop()
+    print('アプリ終了')
+    exit_event.set()
 
 def create_icon():
     icon_image = Image.open("icon.png")
-    menu=Menu(
-        MenuItem('終了',on_quit)
-    )
-    icon = pystray.Icon("test_icon", icon_image,title='clipper App', menu=menu)
+    menu = Menu(MenuItem('終了', on_quit))
+    icon = pystray.Icon("clipper", icon_image, "Clipper App", menu)
     icon.run()
 
 def start_tray_icon():
@@ -55,16 +58,13 @@ def start_tray_icon():
     icon_thread.start()
 
 def main():
-    #show icon
     start_tray_icon()
-    
-    while not flg:
+    print("Clipper 起動中：Endキーでアクティブウィンドウをコピー、トレイから終了可")
+    while not exit_event.is_set():
         if keyboard.is_pressed("End"):
             copy_active_window_to_clipboard()
             while keyboard.is_pressed("End"):
                 pass
-            
-    sys.exit()
 
 if __name__ == "__main__":
     main()
